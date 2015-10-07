@@ -1,0 +1,42 @@
+{
+  "name": "treehouselabs/recommendation-bundle",
+  "type": "symfony-bundle",
+  "description": "Symfony bundle that implements a recommendation engine in your project",
+  "keywords": [],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Peter Kruithof",
+      "email": "author@treehouse.nl",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=5.5",
+    "symfony/symfony": "~2.7",
+    "guzzlehttp/guzzle": "~6.0",
+    "treehouselabs/cache": "~1.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~5.0",
+    "scrutinizer/ocular": "~1.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "TreeHouse\\RecommendationBundle\\": "src/TreeHouse/RecommendationBundle/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "TreeHouse\\RecommendationBundle\\Tests\\": "tests/TreeHouse/RecommendationBundle/Tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0-dev"
+    }
+  }
+}

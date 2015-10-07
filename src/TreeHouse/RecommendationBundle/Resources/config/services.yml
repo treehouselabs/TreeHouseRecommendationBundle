@@ -1,0 +1,16 @@
+services:
+  tree_house.recommendation.engine:
+    class: TreeHouse\RecommendationBundle\Recommendation\Engine
+    arguments:
+      - ~ # client: injected via extension
+      - ~ # cache: injected via extension
+      - @?logger
+    tags:
+      - { name: monolog.logger, channel: recommendation }
+
+  tree_house.recommendation.twig.extension:
+    class: TreeHouse\RecommendationBundle\Twig\RecommendationExtension
+    arguments:
+      - %tree_house.recommendation.engine.site_id%
+    tags:
+      - { name: twig.extension }
