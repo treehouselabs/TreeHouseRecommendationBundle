@@ -7,26 +7,26 @@ cache:
 
 language: php
 php:
-  - 5.5
   - 5.6
   - 7.0
   - hhvm
 
+env:
+  - SYMFONY_VERSION=2.7.*
+
 matrix:
   fast_finish: true
-  allow_failures:
-    - php: hhvm
 
 cache:
   directories:
     - $HOME/.composer/cache
 
 before_script:
-  - travis_retry composer self-update
+  - travis_retry composer require symfony/symfony:${SYMFONY_VERSION} --prefer-source
   - travis_retry composer update ${COMPOSER_FLAGS} --no-interaction --prefer-source
 
 script:
   - ./vendor/bin/phpunit --coverage-text --coverage-clover=coverage.clover
 
 after_script:
-  - if [[ $TRAVIS_PHP_VERSION != 'hhvm' && $TRAVIS_PHP_VERSION != '7.0' ]]; then php vendor/bin/ocular code-coverage:upload --format=php-clover coverage.clover; fi
+  - if [[ $TRAVIS_PHP_VERSION = '5.6' ]]; then php vendor/bin/ocular code-coverage:upload --format=php-clover coverage.clover; fi
