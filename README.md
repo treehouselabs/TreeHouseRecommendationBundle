@@ -111,6 +111,22 @@ script won't be loaded, and nothing will be tracked.
 [async]: https://www.igvita.com/2014/05/20/script-injected-async-scripts-considered-harmful/
 
 
+### Using a mock during development/testing
+
+If you use the tracker during development and/or testing, you risk tainting the
+actual recommendations that are used in production. To prevent this, you can
+use the `RandomNumberClientMock` that comes with this bundle. Just override the
+engine's client service to do this:
+
+```yaml
+tree_house.recommendation.engine.client:
+  class: TreeHouse\RecommendationBundle\Recommendation\Engine\RandomNumberClientMock
+```
+
+Of course you can override this to better suit your specific needs (like a mock
+that returns random entities, for example).
+
+
 ## Testing
 
 ``` bash

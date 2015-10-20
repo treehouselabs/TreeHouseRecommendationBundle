@@ -9,6 +9,7 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use TreeHouse\RecommendationBundle\DependencyInjection\TreeHouseRecommendationExtension;
 use TreeHouse\RecommendationBundle\Recommendation\Engine\ClientInterface;
+use TreeHouse\RecommendationBundle\Recommendation\Engine\RandomNumberClientMock;
 use TreeHouse\RecommendationBundle\Recommendation\EngineInterface;
 
 class TreeHouseRecommendationExtensionTest extends \PHPUnit_Framework_TestCase
@@ -163,6 +164,39 @@ YAML
         $this->assertEquals('tree_house.recommendation.engine.client', (string) $engine->getArgument(0));
         $this->assertEquals('cache_service', (string) $engine->getArgument(1));
         $this->assertTrue($engine->hasTag('monolog.logger'));
+    }
+
+    /**
+     * @test
+     */
+    public function test_client_mock_config()
+    {
+        $container = $this->getContainer(<<<YAML
+services:
+  cache_driver:
+    class: TreeHouse\Cache\Driver\ArrayDriver
+
+  cache_serializer:
+    class: TreeHouse\Cache\Serializer\PhpSerializer
+
+  cache_service:
+    class: TreeHouse\Cache\Cache
+    arguments:
+      - @cache_driver
+      - @cache_serializer
+
+  tree_house.recommendation.engine.client:
+    class: TreeHouse\RecommendationBundle\Recommendation\Engine\RandomNumberClientMock
+
+tree_house_recommendation:
+  cache: cache_service
+  engine:
+    site_id: 1
+YAML
+        );
+
+        $client = $container->getDefinition('tree_house.recommendation.engine.client');
+        $this->assertEquals(RandomNumberClientMock::class, $client->getClass());
     }
 
     /**
