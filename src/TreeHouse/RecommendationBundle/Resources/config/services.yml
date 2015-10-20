@@ -8,6 +8,11 @@ services:
     tags:
       - { name: monolog.logger, channel: recommendation }
 
+  # prototype
+  tree_house.recommendation.engine.client:
+    public: false
+    class: TreeHouse\RecommendationBundle\Recommendation\Engine\ClientInterface
+
   tree_house.recommendation.twig.extension:
     class: TreeHouse\RecommendationBundle\Twig\RecommendationExtension
     arguments:

@@ -73,14 +73,12 @@ class TreeHouseRecommendationExtension extends Extension
         $container->setDefinition($guzzleClientId, $guzzle);
 
         $engineClientId = 'tree_house.recommendation.engine.client';
-        $definition = new Definition(OtrslsoClient::class);
-        $definition->setPublic(false);
+        $definition = $container->getDefinition($engineClientId);
+        $definition->setClass(OtrslsoClient::class);
         $definition->setArguments([
             new Reference($guzzleClientId),
             $config['site_id'],
         ]);
-
-        $container->setDefinition($engineClientId, $definition);
 
         return $engineClientId;
     }
