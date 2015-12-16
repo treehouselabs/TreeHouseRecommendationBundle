@@ -33,8 +33,8 @@ services:
   cache_service:
     class: TreeHouse\Cache\Cache
     arguments:
-      - @cache_driver
-      - @cache_serializer
+      - '@cache_driver'
+      - '@cache_serializer'
 
 tree_house_recommendation:
   cache: cache_service
@@ -124,8 +124,8 @@ services:
   cache_service:
     class: TreeHouse\Cache\Cache
     arguments:
-      - @cache_driver
-      - @cache_serializer
+      - '@cache_driver'
+      - '@cache_serializer'
 
 tree_house_recommendation:
   cache: cache_service
@@ -182,8 +182,8 @@ services:
   cache_service:
     class: TreeHouse\Cache\Cache
     arguments:
-      - @cache_driver
-      - @cache_serializer
+      - '@cache_driver'
+      - '@cache_serializer'
 
   tree_house.recommendation.engine.client:
     class: TreeHouse\RecommendationBundle\Recommendation\Engine\RandomNumberClientMock
