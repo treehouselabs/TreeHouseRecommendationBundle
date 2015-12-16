@@ -1,21 +1,21 @@
 services:
   tree_house.recommendation.engine:
-    class: TreeHouse\RecommendationBundle\Recommendation\Engine
+    class: 'TreeHouse\RecommendationBundle\Recommendation\Engine'
     arguments:
       - ~ # client: injected via extension
       - ~ # cache: injected via extension
-      - @?logger
+      - '@?logger'
     tags:
-      - { name: monolog.logger, channel: recommendation }
+      - { name: 'monolog.logger', channel: 'recommendation' }
 
   # prototype
   tree_house.recommendation.engine.client:
     public: false
-    class: TreeHouse\RecommendationBundle\Recommendation\Engine\ClientInterface
+    class: 'TreeHouse\RecommendationBundle\Recommendation\Engine\ClientInterface'
 
   tree_house.recommendation.twig.extension:
-    class: TreeHouse\RecommendationBundle\Twig\RecommendationExtension
+    class: 'TreeHouse\RecommendationBundle\Twig\RecommendationExtension'
     arguments:
-      - %tree_house.recommendation.engine.site_id%
+      - '%tree_house.recommendation.engine.site_id%'
     tags:
-      - { name: twig.extension }
+      - { name: 'twig.extension' }

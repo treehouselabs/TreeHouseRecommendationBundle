@@ -162,5 +162,5 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 [link-scrutinizer]: https://scrutinizer-ci.com/g/treehouselabs/TreeHouseRecommendationBundle/code-structure
 [link-code-quality]: https://scrutinizer-ci.com/g/treehouselabs/TreeHouseRecommendationBundle
 [link-downloads]: https://packagist.org/packages/treehouselabs/recommendation-bundle
-[link-author]: https://github.com/treehouselabs
+[link-author]: https://github.com/pkruithof
 [link-contributors]: ../../contributors
