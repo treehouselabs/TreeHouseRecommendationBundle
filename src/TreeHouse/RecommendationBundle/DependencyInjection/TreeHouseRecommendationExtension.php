@@ -2,7 +2,9 @@
 
 namespace TreeHouse\RecommendationBundle\DependencyInjection;
 
-use GuzzleHttp\Client;
+use Http\Client\Curl\Client;
+use Http\Message\MessageFactory\GuzzleMessageFactory;
+use Http\Message\StreamFactory\GuzzleStreamFactory;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -60,23 +62,30 @@ class TreeHouseRecommendationExtension extends Extension
      */
     private function loadEngineClient(array $config, ContainerBuilder $container)
     {
-        $guzzle = new Definition(Client::class);
-        $guzzle->setPublic(false);
-        $guzzle->setArguments([
-            [
-                'base_uri' => $config['endpoint'],
-                'timeout' => $config['timeout'],
-            ],
+        $options = [
+            CURLOPT_TIMEOUT => $config['timeout'],
+        ];
+
+        $messageFactory = (new Definition(GuzzleMessageFactory::class))->setPublic(false);
+        $streamFactory = (new Definition(GuzzleStreamFactory::class))->setPublic(false);
+
+        $client = new Definition(Client::class);
+        $client->setPublic(false);
+        $client->setArguments([
+            $messageFactory,
+            $streamFactory,
+            $options,
         ]);
 
-        $guzzleClientId = 'tree_house.recommendation.engine.guzzle_client';
-        $container->setDefinition($guzzleClientId, $guzzle);
+        $httpClientId = 'tree_house.recommendation.engine.http_client';
+        $container->setDefinition($httpClientId, $client);
 
         $engineClientId = 'tree_house.recommendation.engine.client';
         $definition = $container->getDefinition($engineClientId);
         $definition->setClass(OtrslsoClient::class);
         $definition->setArguments([
-            new Reference($guzzleClientId),
+            new Reference($httpClientId),
+            $config['endpoint'],
             $config['site_id'],
         ]);
 
