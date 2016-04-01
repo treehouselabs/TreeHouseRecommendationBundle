@@ -2,7 +2,9 @@
 
 namespace TreeHouse\RecommendationBundle\Tests\DependencyInjection;
 
-use GuzzleHttp\ClientInterface as GuzzleClientInterface;
+use Http\Client\HttpClient;
+use Http\Message\MessageFactory;
+use Http\Message\StreamFactory;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -46,24 +48,31 @@ tree_house_recommendation:
 YAML
         );
 
-        // assert the Guzzle client
+        // assert the HTTP client
         $this->assertTrue(
-            $container->hasDefinition('tree_house.recommendation.engine.guzzle_client'),
-            'The extension should have created a Guzzle client to perform HTTP requests with'
+            $container->hasDefinition('tree_house.recommendation.engine.http_client'),
+            'The extension should have created a HTTP client to perform requests with'
         );
 
-        $guzzle = $container->getDefinition('tree_house.recommendation.engine.guzzle_client');
+        $client = $container->getDefinition('tree_house.recommendation.engine.http_client');
         $this->assertTrue(
-            is_a($guzzle->getClass(), GuzzleClientInterface::class, true),
-            sprintf('Guzzle client must be an instance of %s', GuzzleClientInterface::class)
+            is_a($client->getClass(), HttpClient::class, true),
+            sprintf('HTTP client must be an instance of %s', HttpClient::class)
         );
-        $this->assertEquals(
-            [
-                'base_uri' => $endpoint,
-                'timeout' => $timeout,
-            ],
-            $guzzle->getArgument(0)
+
+        $messageFactory = $client->getArgument(0);
+        $streamFactory = $client->getArgument(1);
+        $options = $client->getArgument(2);
+
+        $this->assertTrue(
+            is_a($messageFactory->getClass(), MessageFactory::class, true),
+            sprintf('First argument for HTTP client must be an instance of %s', MessageFactory::class)
         );
+        $this->assertTrue(
+            is_a($streamFactory->getClass(), StreamFactory::class, true),
+            sprintf('First argument for HTTP client must be an instance of %s', StreamFactory::class)
+        );
+        $this->assertEquals([CURLOPT_TIMEOUT => $timeout], $options);
 
         // assert the engine client
         $this->assertTrue(
@@ -77,9 +86,9 @@ YAML
             sprintf('Engine client must be an instance of %s', ClientInterface::class)
         );
         $this->assertEquals(
-            'tree_house.recommendation.engine.guzzle_client',
+            'tree_house.recommendation.engine.http_client',
             (string) $client->getArgument(0),
-            'The recommendation engine client should receive the Guzzle client'
+            'The recommendation engine client should receive the HTTP client'
         );
 
         // assert the engine
@@ -134,10 +143,10 @@ tree_house_recommendation:
 YAML
         );
 
-        // assert the Guzzle client
+        // assert the HTTP client
         $this->assertTrue(
-            $container->hasDefinition('tree_house.recommendation.engine.guzzle_client'),
-            'The extension should have created a Guzzle client to perform HTTP requests with'
+            $container->hasDefinition('tree_house.recommendation.engine.http_client'),
+            'The extension should have created a HTTP client to perform requests with'
         );
 
         // assert the engine client
@@ -148,9 +157,9 @@ YAML
 
         $client = $container->getDefinition('tree_house.recommendation.engine.client');
         $this->assertEquals(
-            'tree_house.recommendation.engine.guzzle_client',
+            'tree_house.recommendation.engine.http_client',
             (string) $client->getArgument(0),
-            'The recommendation engine client should receive the Guzzle client'
+            'The recommendation engine client should receive the HTTP client'
         );
 
         // assert the engine

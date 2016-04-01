@@ -2,24 +2,42 @@
 
 namespace TreeHouse\RecommendationBundle\Tests\Recommendation\Engine;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\TransferException;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
+use Http\Client\Exception\RequestException;
+use Http\Client\HttpClient;
+use Http\Message\MessageFactory\GuzzleMessageFactory;
+use Http\Mock\Client as MockClient;
+use Prophecy\Argument\Token\TypeToken;
+use Prophecy\Prophecy\ObjectProphecy;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use TreeHouse\RecommendationBundle\Recommendation\Engine\ClientInterface;
 use TreeHouse\RecommendationBundle\Recommendation\Engine\OtrslsoClient;
 
 class OtrslsoClientTest extends \PHPUnit_Framework_TestCase
 {
+    const ENDPOINT = 'http://localhost';
+    const SITE_ID = 1;
+
+    /**
+     * @var MockClient
+     */
+    private $mockClient;
+
+    /**
+     * @inheritdoc
+     */
+    protected function setUp()
+    {
+        $this->mockClient = new MockClient(new GuzzleMessageFactory());
+    }
+
     /**
      * @test
      */
     public function it_can_be_constructed()
     {
-        $client = new OtrslsoClient(new Client(), 1);
+        $client = new OtrslsoClient($this->mockClient, self::ENDPOINT, self::SITE_ID);
 
         $this->assertInstanceOf(ClientInterface::class, $client);
     }
@@ -47,28 +65,23 @@ class OtrslsoClientTest extends \PHPUnit_Framework_TestCase
         $ids = [123, 456, 789, 345, 678];
         $result = $this->createApiResult($ids);
 
-        $container = [];
-        $stack = HandlerStack::create($this->mockResponse(200, $result));
-        $stack->push(Middleware::history($container));
-
-        $siteId = 1;
-        $guzzle = new Client(['handler' => $stack]);
-        $client = new OtrslsoClient($guzzle, $siteId);
+        $this->mockClient->addResponse($this->mockResponse(200, $result));
+        $client = new OtrslsoClient($this->mockClient, self::ENDPOINT, self::SITE_ID);
 
         $recommended = $client->$method($objectId = 1234);
 
-        $this->assertCount(1, $container, 'A request should have been made');
+        $this->assertCount(1, $this->mockClient->getRequests(), 'A request should have been made');
         $this->assertEquals($ids, $recommended);
 
         /** @var RequestInterface $request */
-        $request = $container[0]['request'];
+        $request = $this->mockClient->getRequests()[0];
         $path = $request->getUri()->getPath();
         parse_str($request->getUri()->getQuery(), $query);
 
         $this->assertEquals($method, $path);
         $this->assertEquals(
             [
-                'c' => $siteId,
+                'c' => self::SITE_ID,
                 $queryKey => $objectId,
             ],
             $query
@@ -86,9 +99,8 @@ class OtrslsoClientTest extends \PHPUnit_Framework_TestCase
         $ids = [123, 456, 789, 345, 678];
         $result = $this->createApiResult($ids);
 
-        $stack = HandlerStack::create($this->mockResponse(200, $result));
-        $guzzle = new Client(['handler' => $stack]);
-        $client = new OtrslsoClient($guzzle, 1);
+        $this->mockClient->addResponse($this->mockResponse(200, $result));
+        $client = new OtrslsoClient($this->mockClient, self::ENDPOINT, self::SITE_ID);
 
         $recommended = $client->$method(1234, 3);
 
@@ -99,16 +111,15 @@ class OtrslsoClientTest extends \PHPUnit_Framework_TestCase
      * @test
      * @expectedException \TreeHouse\RecommendationBundle\Exception\EngineException
      */
-    public function it_throws_exception_on_guzzle_exception()
+    public function it_throws_exception_on_http_exception()
     {
-        $guzzle = $this->getMockBuilder(Client::class)->setMethods(['request'])->getMock();
-        $guzzle
-            ->expects($this->once())
-            ->method('request')
-            ->willThrowException(new TransferException())
-        ;
+        $exception = $this->prophesize(RequestException::class)->reveal();
 
-        $client = new OtrslsoClient($guzzle, 1);
+        /** @var HttpClient|ObjectProphecy $httpClient */
+        $httpClient = $this->prophesize(HttpClient::class);
+        $httpClient->sendRequest(new TypeToken(RequestInterface::class))->willThrow($exception);
+
+        $client = new OtrslsoClient($httpClient->reveal(), self::ENDPOINT, self::SITE_ID);
         $client->recommend(1234);
     }
 
@@ -120,9 +131,8 @@ class OtrslsoClientTest extends \PHPUnit_Framework_TestCase
     {
         $result = '{some_invalid_json}';
 
-        $stack = HandlerStack::create($this->mockResponse(200, $result));
-        $guzzle = new Client(['handler' => $stack]);
-        $client = new OtrslsoClient($guzzle, 1);
+        $this->mockClient->addResponse($this->mockResponse(200, $result));
+        $client = new OtrslsoClient($this->mockClient, self::ENDPOINT, self::SITE_ID);
 
         $client->recommend(1234);
     }
@@ -132,15 +142,11 @@ class OtrslsoClientTest extends \PHPUnit_Framework_TestCase
      * @param mixed $data
      * @param array $headers
      *
-     * @return MockHandler
+     * @return ResponseInterface
      */
     private function mockResponse($code = 200, $data = null, $headers = [])
     {
-        $mock = new MockHandler([
-            new Response($code, $headers, $data),
-        ]);
-
-        return $mock;
+        return new Response($code, $headers, $data);
     }
 
     /**

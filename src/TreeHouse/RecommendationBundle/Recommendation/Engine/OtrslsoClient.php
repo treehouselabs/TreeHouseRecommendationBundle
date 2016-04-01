@@ -2,8 +2,10 @@
 
 namespace TreeHouse\RecommendationBundle\Recommendation\Engine;
 
-use GuzzleHttp\ClientInterface as GuzzleClient;
-use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Uri;
+use Http\Client\Exception\RequestException;
+use Http\Client\HttpClient;
 use Psr\Http\Message\ResponseInterface;
 use TreeHouse\RecommendationBundle\Exception\EngineException;
 
@@ -13,22 +15,29 @@ use TreeHouse\RecommendationBundle\Exception\EngineException;
 class OtrslsoClient implements ClientInterface
 {
     /**
-     * @var GuzzleClient
+     * @var HttpClient
      */
-    protected $guzzle;
+    private $httpClient;
+
+    /**
+     * @var string
+     */
+    private $endpoint;
 
     /**
      * @var int
      */
-    protected $siteId;
+    private $siteId;
 
     /**
-     * @param GuzzleClient $guzzle
-     * @param int          $siteId
+     * @param HttpClient $guzzle
+     * @param string     $endpoint
+     * @param int        $siteId
      */
-    public function __construct(GuzzleClient $guzzle, $siteId)
+    public function __construct(HttpClient $guzzle, $endpoint, $siteId)
     {
-        $this->guzzle = $guzzle;
+        $this->httpClient = $guzzle;
+        $this->endpoint = $endpoint;
         $this->siteId = $siteId;
     }
 
@@ -72,9 +81,12 @@ class OtrslsoClient implements ClientInterface
      */
     protected function request($path, array $query = [])
     {
+        $uri = (new Uri($this->endpoint))->withPath($path)->withQuery(http_build_query($query));
+        $request = new Request('GET', $uri);
+
         try {
-            return $this->guzzle->request('GET', $path, ['query' => $query]);
-        } catch (GuzzleException $e) {
+            return $this->httpClient->sendRequest($request);
+        } catch (RequestException $e) {
             // something went wrong with the request, probably a timeout.
             throw new EngineException($e->getMessage(), $e->getCode(), $e);
         }
